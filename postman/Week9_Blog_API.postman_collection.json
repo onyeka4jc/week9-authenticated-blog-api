@@ -1,0 +1,208 @@
+{
+  "info": {
+    "name": "Week 9 - Authenticated Blog API",
+    "description": "End-to-end authentication, protected CRUD, and article ownership tests. Default baseUrl is local; change it to the Render service URL after deployment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Auth - Sign up User A",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('emailA', 'week9.usera.' + Date.now() + '@example.com');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('User A registered', function () { pm.response.to.have.status(201); });",
+              "const data = pm.response.json();",
+              "pm.collectionVariables.set('userIdA', data.user.id); pm.test('Response includes a token and safe user', function () { pm.expect(data.token).to.be.a('string'); pm.expect(data.user.email).to.eql(pm.collectionVariables.get('emailA')); pm.expect(data.user.password).to.be.undefined; });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Week 9 User A\",\n  \"email\": \"{{emailA}}\",\n  \"password\": \"Password123!\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/signup"
+      }
+    },
+    {
+      "name": "2. Auth - Log in User A",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "pm.test('User A login successful', function () { pm.response.to.have.status(200); });",
+          "const data = pm.response.json();",
+          "pm.collectionVariables.set('tokenA', data.token);",
+          "pm.test('JWT saved as tokenA', function () { pm.expect(pm.collectionVariables.get('tokenA')).to.be.a('string'); });"
+        ]}
+      }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{emailA}}\",\n  \"password\": \"Password123!\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "3. Auth - Sign up User B",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+          "pm.collectionVariables.set('emailB', 'week9.userb.' + Date.now() + '@example.com');"
+        ]}},
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('User B registered', function () { pm.response.to.have.status(201); });"
+        ]}}
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Week 9 User B\",\n  \"email\": \"{{emailB}}\",\n  \"password\": \"Password123!\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/signup"
+      }
+    },
+    {
+      "name": "4. Auth - Log in User B",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('User B login successful', function () { pm.response.to.have.status(200); });",
+        "const data = pm.response.json();",
+        "pm.collectionVariables.set('tokenB', data.token);",
+        "pm.test('JWT saved as tokenB', function () { pm.expect(pm.collectionVariables.get('tokenB')).to.be.a('string'); });"
+      ]}}],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{emailB}}\",\n  \"password\": \"Password123!\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "5. Articles - Create as User A",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Article created', function () { pm.response.to.have.status(201); });",
+        "const data = pm.response.json();",
+        "pm.collectionVariables.set('articleId', data.article._id);",
+        "pm.test('Article is assigned to User A', function () { pm.expect(data.article.userId.toString()).to.eql(pm.collectionVariables.get('userIdA')); pm.expect(data.article.author).to.eql('Week 9 User A'); });"
+      ]}}],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{tokenA}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"User A Authentication Article\",\n  \"content\": \"This article belongs to User A and is used to check ownership authorization.\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/articles"
+      }
+    },
+    {
+      "name": "6. Articles - List with User A token",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Article list is protected but accessible with token', function () { pm.response.to.have.status(200); });"
+      ]}}],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{tokenA}}" }],
+        "url": "{{baseUrl}}/api/articles"
+      }
+    },
+    {
+      "name": "7. Articles - Search with User A token",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Search is protected but accessible with token', function () { pm.response.to.have.status(200); });"
+      ]}}],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{tokenA}}" }],
+        "url": "{{baseUrl}}/api/articles/search?q=authentication"
+      }
+    },
+    {
+      "name": "8. Articles - Get User A article",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Get article succeeds for authenticated reader', function () { pm.response.to.have.status(200); });"
+      ]}}],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{tokenA}}" }],
+        "url": "{{baseUrl}}/api/articles/{{articleId}}"
+      }
+    },
+    {
+      "name": "9. Security - List without token (expect 401)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Missing token returns 401', function () { pm.response.to.have.status(401); });"
+      ]}}],
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/articles" }
+    },
+    {
+      "name": "10. Security - User B updates User A article (expect 403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Non-owner cannot update article', function () { pm.response.to.have.status(403); });"
+      ]}}],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Unauthorized Edit Attempt\",\n  \"content\": \"User B must not be allowed to edit User A's article.\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/articles/{{articleId}}"
+      }
+    },
+    {
+      "name": "11. Security - User B deletes User A article (expect 403)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Non-owner cannot delete article', function () { pm.response.to.have.status(403); });"
+      ]}}],
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{tokenB}}" }],
+        "url": "{{baseUrl}}/api/articles/{{articleId}}"
+      }
+    },
+    {
+      "name": "12. Articles - Owner updates own article",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Owner can update own article', function () { pm.response.to.have.status(200); });"
+      ]}}],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{tokenA}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated User A Article\",\n  \"content\": \"The original author can update this article after authentication and ownership checks.\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/api/articles/{{articleId}}"
+      }
+    },
+    {
+      "name": "13. Articles - Owner deletes own article",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Owner can delete own article', function () { pm.response.to.have.status(200); });"
+      ]}}],
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{tokenA}}" }],
+        "url": "{{baseUrl}}/api/articles/{{articleId}}"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "emailA", "value": "", "type": "string" },
+    { "key": "emailB", "value": "", "type": "string" },
+    { "key": "tokenA", "value": "", "type": "string" },
+    { "key": "tokenB", "value": "", "type": "string" },
+    { "key": "articleId", "value": "", "type": "string" }
+  ]
+}

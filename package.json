@@ -1,0 +1,28 @@
+{
+  "name": "week8-blog-api",
+  "version": "2.0.0",
+  "description": "Week 9 authenticated Blog API with JWT, bcrypt password hashing, protected CRUD routes, and article ownership checks.",
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node seed/seedArticles.js",
+    "migrate:legacy-articles": "node scripts/assignLegacyArticles.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "joi": "^18.2.9",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.10.3"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
+  }
+}
